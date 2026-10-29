@@ -1,18 +1,22 @@
-# Library Management System - Catalog & Search Client
+# Library Management System - Reading List, Auth Flow & Space Booking Form
 
-This repository section contains the patron-facing frontend for browsing and searching the Library Catalog built with React, React Router v6, Tailwind CSS, and Vite.
+This module implements the state layer and user interaction flows for the Library Management System:
+- **Reading List Context**: React `useReducer` managing `ADD_BOOK`, `REMOVE_BOOK`, and `CLEAR_LIST`, persisted across sessions in `localStorage`.
+- **Authentication & Authorization**: Controlled `LoginPage` and `RegisterPage` issuing JWTs and storing credentials; protected routes guarded by `ProtectedRoute`.
+- **Space Booking Form**: Controlled reservation form (`SpaceBookingPage`) with dropdown choices, date picker, start/end time slots, and validation.
+- **Navbar Integration**: Displays real-time reading list items count badge and user auth state.
 
-## Verified Checked Files
-- `client/src/main.jsx` - Wraps `<App />` in `<BrowserRouter>`
-- `client/src/App.jsx` - Defines routes for `'/'` and `'/books/:id'`
-- `client/src/pages/HomePage.jsx` - Renders `BookGrid`, `SearchBar`, and a genre filter holding shared state
-- `client/src/components/BookGrid.jsx` - Fetches `GET /books` with `genreId`/`search` query params, handles loading/error/empty states
-- `client/src/components/BookCard.jsx` - Renders one book with key prop equal to book id
-- `client/src/components/SearchBar.jsx` - Debounces input before calling `onSearch`
-- `client/src/pages/BookDetail.jsx` - Reads `id` from `useParams()` and fetches `GET /books/:id`
-- `client/.env` - Defines `VITE_API_URL`
+## Required Files Included
+- `client/src/context/ReadingListContext.jsx`
+- `client/src/App.jsx`
+- `client/src/pages/LoginPage.jsx`
+- `client/src/pages/RegisterPage.jsx`
+- `client/src/components/ProtectedRoute.jsx`
+- `client/src/pages/SpaceBookingPage.jsx`
+- `client/src/components/Navbar.jsx`
+- `client/.env`
 
-## Running the Frontend
+## Local Development
 ```bash
 cd client
 npm install

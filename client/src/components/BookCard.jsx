@@ -1,44 +1,54 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useReadingList } from '../context/ReadingListContext';
+import { Bookmark, BookmarkCheck } from 'lucide-react';
 
 export default function BookCard({ book }) {
-  if (!book) return null;
+  const { items, addBook, removeBook } = useReadingList();
+  const isSaved = items.some(item => item.id === book.id);
 
-  const { id, title, author, publishedYr, genre, isbn } = book;
+  const toggleSave = (e) => {
+    e.preventDefault();
+    if (isSaved) {
+      removeBook(book.id);
+    } else {
+      addBook(book);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-      <div className="p-5 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <span className="inline-block px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full">
-            {genre?.name || 'General'}
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 flex flex-col justify-between p-5 transition-shadow">
+      <div>
+        <div className="flex justify-between items-start">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+            {book.genre?.name || 'General'}
           </span>
-          {publishedYr && (
-            <span className="text-xs text-slate-400 font-medium">{publishedYr}</span>
-          )}
+          <button
+            onClick={toggleSave}
+            className={`p-1.5 rounded-full transition-colors ${
+              isSaved ? 'text-amber-500 bg-amber-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+            }`}
+            title={isSaved ? 'Remove from reading list' : 'Add to reading list'}
+          >
+            {isSaved ? <BookmarkCheck className="w-5 h-5 fill-amber-500" /> : <Bookmark className="w-5 h-5" />}
+          </button>
         </div>
 
-        <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
-          {title}
-        </h3>
-        
-        <p className="text-sm text-slate-600 font-medium">
-          by <span className="text-slate-800">{author}</span>
-        </p>
-
-        {isbn && (
-          <p className="text-xs text-slate-400 font-mono mt-1">
-            ISBN: {isbn}
-          </p>
-        )}
+        <Link to={`/books/${book.id}`} className="mt-3 block group">
+          <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
+            {book.title}
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">by {book.author}</p>
+        </Link>
       </div>
 
-      <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+      <div className="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+        <span>Published {book.publishedYr}</span>
         <Link
-          to={`/books/${id}`}
-          className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors group-hover:translate-x-0.5 transform duration-150"
+          to={`/books/${book.id}`}
+          className="font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
         >
-          View Details &rarr;
+          Details &rarr;
         </Link>
       </div>
     </div>

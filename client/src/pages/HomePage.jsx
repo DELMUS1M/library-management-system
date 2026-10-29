@@ -1,101 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import SearchBar from '../components/SearchBar';
 import BookGrid from '../components/BookGrid';
+import SearchBar from '../components/SearchBar';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function HomePage() {
-  const [selectedGenreId, setSelectedGenreId] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('title');
   const [genres, setGenres] = useState([]);
-  const [genresLoading, setGenresLoading] = useState(true);
+  const [selectedGenre, setSelectedGenre] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch genres for the genre filter dropdown
   useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/genres`);
-        if (response.ok) {
-          const data = await response.json();
-          setGenres(Array.isArray(data) ? data : data.data || []);
-        }
-      } catch (err) {
-        console.error('Failed to load genres:', err);
-      } finally {
-        setGenresLoading(false);
-      }
-    };
-
-    fetchGenres();
+    fetch(`${API_URL}/genres`)
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => setGenres(Array.isArray(data) ? data : []))
+      .catch(() => setGenres([]));
   }, []);
 
   return (
-    <div className="space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Explore the Library Catalog
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="text-center max-w-2xl mx-auto space-y-2">
+        <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+          Library Catalog & Resource Center
         </h1>
-        <p className="mt-2 text-indigo-100 max-w-2xl text-base">
-          Browse through our curated collection of books across various genres or search for your favorite authors and titles.
+        <p className="text-gray-600 text-sm sm:text-base">
+          Browse our book collection, manage your personal reading list, and reserve study spaces.
         </p>
       </div>
 
-      {/* Controls Section: Search Bar, Genre Filter, Sort Control */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="w-full md:w-1/2">
-            <SearchBar onSearch={setSearchQuery} />
-          </div>
-
-          <div className="flex flex-wrap w-full md:w-auto items-center gap-3">
-            {/* Genre Filter */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <label htmlFor="genre-select" className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Genre:
-              </label>
-              <select
-                id="genre-select"
-                value={selectedGenreId}
-                onChange={(e) => setSelectedGenreId(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                disabled={genresLoading}
-              >
-                <option value="">All Genres</option>
-                {genres.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sort Control */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <label htmlFor="sort-select" className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Sort:
-              </label>
-              <select
-                id="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="title">Title (A-Z)</option>
-                <option value="author">Author (A-Z)</option>
-                <option value="year">Published Year (Newest)</option>
-              </select>
-            </div>
-          </div>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div className="w-full sm:w-2/3">
+          <SearchBar onSearch={setSearchTerm} />
+        </div>
+        <div className="w-full sm:w-1/3">
+          <select
+            value={selectedGenre}
+            onChange={(e) => setSelectedGenre(e.target.value)}
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+          >
+            <option value="">All Genres</option>
+            {genres.map((g) => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Book Grid Component */}
-      <BookGrid
-        genreId={selectedGenreId}
-        search={searchQuery}
-        sortBy={sortBy}
-      />
+      <BookGrid genreId={selectedGenre} search={searchTerm} />
     </div>
   );
 }

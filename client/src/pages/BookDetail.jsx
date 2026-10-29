@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useReadingList } from '../context/ReadingListContext';
+import { ArrowLeft, Bookmark, BookmarkCheck, BookOpen, Star } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function BookDetail() {
   const { id } = useParams();
@@ -7,49 +11,38 @@ export default function BookDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchBookDetail = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/books/${id}`);
-        if (!response.ok) {
-          throw new Error(`Book not found (Status: ${response.status})`);
-        }
-        const data = await response.json();
-        setBook(data.data || data);
-      } catch (err) {
-        setError(err.message || 'Failed to fetch book details.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { items, addBook, removeBook } = useReadingList();
+  const isSaved = items.some(item => item.id === id);
 
-    fetchBookDetail();
+  useEffect(() => {
+    fetch(`${API_URL}/books/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Book not found');
+        return res.json();
+      })
+      .then((data) => {
+        setBook(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, [id]);
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm animate-pulse space-y-4">
-        <div className="h-6 bg-slate-200 rounded w-1/4"></div>
-        <div className="h-8 bg-slate-200 rounded w-3/4"></div>
-        <div className="h-5 bg-slate-200 rounded w-1/2"></div>
-        <div className="h-24 bg-slate-100 rounded mt-6"></div>
+      <div className="max-w-4xl mx-auto px-4 py-12 flex justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !book) {
     return (
-      <div className="max-w-lg mx-auto bg-red-50 border border-red-200 rounded-2xl p-8 text-center text-red-800">
-        <div className="text-4xl mb-3">❌</div>
-        <h2 className="text-xl font-bold">Error Loading Book</h2>
-        <p className="text-sm mt-1 text-red-600">{error}</p>
-        <Link
-          to="/"
-          className="inline-block mt-6 px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
-        >
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Book Not Found</h2>
+        <Link to="/" className="mt-4 inline-block text-indigo-600 font-medium hover:underline">
           &larr; Back to Catalog
         </Link>
       </div>
@@ -57,60 +50,53 @@ export default function BookDetail() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Link
-        to="/"
-        className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
-      >
-        &larr; Back to Catalog
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <Link to="/" className="inline-flex items-center space-x-1 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Catalog</span>
       </Link>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-8 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full uppercase tracking-wider">
-            {book?.genre?.name || 'General'}
-          </span>
-          <span className="text-sm text-slate-500 font-medium">
-            Published: {book?.publishedYr || 'N/A'}
-          </span>
-        </div>
-
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 leading-tight">
-            {book?.title}
-          </h1>
-          <p className="text-lg text-slate-600 font-medium mt-2">
-            Written by <span className="text-slate-800 font-semibold">{book?.author}</span>
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-gray-200">
           <div>
-            <span className="text-slate-500 font-medium">ISBN:</span>
-            <span className="ml-2 font-mono text-slate-800">{book?.isbn || 'N/A'}</span>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700">
+              {book.genre?.name || 'General'}
+            </span>
+            <h1 className="text-3xl font-bold text-gray-900 mt-2">{book.title}</h1>
+            <p className="text-lg text-gray-600">by {book.author}</p>
           </div>
-          <div>
-            <span className="text-slate-500 font-medium">Book ID:</span>
-            <span className="ml-2 font-mono text-slate-800 text-xs">{book?.id}</span>
-          </div>
+
+          <button
+            onClick={() => isSaved ? removeBook(book.id) : addBook(book)}
+            className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              isSaved
+                ? 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }`}
+          >
+            {isSaved ? <BookmarkCheck className="w-5 h-5 text-amber-600" /> : <Bookmark className="w-5 h-5" />}
+            <span>{isSaved ? 'Saved to Reading List' : 'Add to Reading List'}</span>
+          </button>
         </div>
 
-        {book?.reviews && book.reviews.length > 0 && (
-          <div className="border-t border-slate-100 pt-6 space-y-3">
-            <h3 className="text-lg font-bold text-slate-900">User Reviews</h3>
-            <div className="space-y-3">
-              {book.reviews.map((rev) => (
-                <div key={rev.id} className="p-3 bg-slate-50 rounded-lg text-sm border border-slate-100">
-                  <div className="flex justify-between items-center text-xs text-slate-500 mb-1">
-                    <span className="font-semibold text-amber-600">{"★".repeat(rev.rating)}</span>
-                    <span>{rev.user?.name || 'Patron'}</span>
-                  </div>
-                  {rev.comment && <p className="text-slate-700">{rev.comment}</p>}
-                </div>
-              ))}
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+          <div>
+            <span className="block text-xs text-gray-400">Published</span>
+            <span className="font-medium text-gray-900">{book.publishedYr}</span>
           </div>
-        )}
+          <div>
+            <span className="block text-xs text-gray-400">ISBN</span>
+            <span className="font-medium text-gray-900">{book.isbn}</span>
+          </div>
+          <div>
+            <span className="block text-xs text-gray-400">Total Copies</span>
+            <span className="font-medium text-gray-900">{book.totalCopies || 1}</span>
+          </div>
+          <div>
+            <span className="block text-xs text-gray-400">Status</span>
+            <span className="font-medium text-emerald-600">Available</span>
+          </div>
+        </div>
       </div>
     </div>
   );
