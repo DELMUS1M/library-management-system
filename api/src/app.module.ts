@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { GenresModule } from './genres/genres.module';
-import { BooksModule } from './books/books.module';
-import { UsersModule } from './users/users.module';
+import { BorrowRequestsModule } from './borrow-requests/borrow-requests.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, GenresModule, BooksModule, UsersModule],
+  imports: [PrismaModule, AuthModule, BorrowRequestsModule, BookingsModule, AdminModule],
 })
 export class AppModule {}

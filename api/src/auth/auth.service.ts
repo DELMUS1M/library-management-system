@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -15,23 +15,22 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Email is already registered');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
-        password: hashedPassword,
         name: dto.name,
+        password: hashedPassword,
         role: dto.role || 'PATRON',
       },
     });
 
     const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
     return {
-      message: 'User registered successfully',
-      access_token: token,
+      accessToken: token,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }
@@ -39,17 +38,17 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    const validPassword = await bcrypt.compare(dto.password, user.password);
-    if (!validPassword) {
-      throw new UnauthorizedException('Invalid credentials');
+    const isMatch = await bcrypt.compare(dto.password, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
     return {
-      access_token: token,
+      accessToken: token,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }

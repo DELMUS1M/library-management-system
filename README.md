@@ -1,24 +1,39 @@
-# Library Management System - Reading List, Auth Flow & Space Booking Form
+# Library Management System - Borrow Tracking, Space Booking & Admin Routes
 
-This module implements the state layer and user interaction flows for the Library Management System:
-- **Reading List Context**: React `useReducer` managing `ADD_BOOK`, `REMOVE_BOOK`, and `CLEAR_LIST`, persisted across sessions in `localStorage`.
-- **Authentication & Authorization**: Controlled `LoginPage` and `RegisterPage` issuing JWTs and storing credentials; protected routes guarded by `ProtectedRoute`.
-- **Space Booking Form**: Controlled reservation form (`SpaceBookingPage`) with dropdown choices, date picker, start/end time slots, and validation.
-- **Navbar Integration**: Displays real-time reading list items count badge and user auth state.
+This repository contains the backend implementation for borrow tracking, study space bookings, and protected admin routes built with NestJS, Prisma ORM, and PostgreSQL.
 
-## Required Files Included
-- `client/src/context/ReadingListContext.jsx`
-- `client/src/App.jsx`
-- `client/src/pages/LoginPage.jsx`
-- `client/src/pages/RegisterPage.jsx`
-- `client/src/components/ProtectedRoute.jsx`
-- `client/src/pages/SpaceBookingPage.jsx`
-- `client/src/components/Navbar.jsx`
-- `client/.env`
+## Features Implemented
+1. **Prisma Schema (`api/prisma/schema.prisma`)**:
+   - `BorrowStatus` (`PENDING`, `APPROVED`, `REJECTED`, `RETURNED`, `OVERDUE`) and `BookingStatus` (`PENDING`, `CONFIRMED`, `CANCELLED`) enums.
+   - `BorrowRequest`, `Space`, and `Booking` models with full relational constraints to `User` and `Book`.
 
-## Local Development
+2. **Borrow Tracking (`POST /borrow-requests`, `PATCH /borrow-requests/:id/status`)**:
+   - `POST /borrow-requests` creates a borrow request from reading list items.
+   - `PATCH /borrow-requests/:id/status` (Librarian only) updates status and automatically computes late fines.
+
+3. **Fine Calculator & Unit Testing (`fine-calculator.ts` & `fine-calculator.spec.ts`)**:
+   - Pure typed `calculateFine(dueDate, returnDate, ratePerDay)` function.
+   - Unit tests covering on-time returns ($0.00 fine) and late returns (accurate daily rate computation).
+
+4. **Space Booking with Overlap Conflict Checks (`POST /bookings`)**:
+   - Server-side conflict detection via Prisma `findFirst` checking time overlaps (`startTime < newEnd AND endTime > newStart`).
+   - Throws `ConflictException` (409) if the space is already booked.
+
+5. **Admin Routes (`/admin/borrow-requests`, `/admin/bookings`)**:
+   - Protected with `@Roles(Role.LIBRARIAN)` and `RolesGuard`.
+
+## Running Unit Tests
 ```bash
-cd client
+cd api
+npm run test
+```
+
+## Setup Instructions
+```bash
+cd api
+cp .env.example .env
 npm install
-npm run dev
+npx prisma migrate dev --name init
+npx prisma db seed
+npm run start:dev
 ```
